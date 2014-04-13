@@ -1,0 +1,71 @@
+#!/usr/bin/env node
+
+var cmd = require('commander');
+
+cmd
+  .version(require('../package.json').version)
+  .description(require('../package.json').description)
+  .option('--cipher <cipher>', 'encryption cipher')
+  .option('--no-gzip', 'disable compression when storing')
+  .option('--no-gunzip', 'disable uncompression when reading')
+  .option('--depth <depth>', 'partition the data into directories of given depth (default: 3)')
+  .option('-v, --volume <dir>', 'kafs volume (default: ~/.kafs or env.KAFS_HOME)')
+
+cmd
+  .command('init')
+  .description('initialize volume options')
+
+cmd
+  .command('mv <src> <dest>')
+  .description('move a virtual path to another virtual path')
+
+cmd
+  .command('rm <path>')
+  .description('remove file from volume')
+
+cmd
+  .command('cat <path>')
+  .description('output the contents of a file')
+
+cmd
+  .command('write <path>')
+  .description('write STDIN to a file at virtual path')
+
+cmd
+  .command('create <path>')
+  .description('write STDIN to a new file at virtual path (will cause an error if file already exists)')
+
+cmd
+  .command('touch <path>')
+  .description('touch the path')
+
+cmd
+  .command('test <path>')
+  .description('returns 0 if virtual file/dir exists, 1 otherwise')
+  .option('-f, --file', 'check for a virtual file')
+  .option('-d, --dir', 'check for a virtual directory')
+
+cmd
+  .command('export <dest>')
+  .description('export the volume contents to new directory')
+  .option('--exclude <glob>', 'exclude paths matching glob')
+  .option('--include <glob>', 'include paths matching glob')
+
+cmd
+  .command('import <src>')
+  .description('import the contents of a directory')
+  .option('--exclude <glob>', 'exclude paths matching glob')
+  .option('--include <glob>', 'include paths matching glob')
+
+cmd
+  .command('mount [srcpath] <dstpath>')
+  .description('mount the volume')
+  .option('-r, --readonly', 'mount read-only')
+
+cmd
+  .command('destroy')
+  .description('destroy the volume, located at [dir]')
+  .option('-f, --force', 'force destruction without prompting')
+  .option('-i, --init', 'initialize a new volume after destroying')
+
+cmd.parse(process.argv);

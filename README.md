@@ -1,7 +1,7 @@
-disker
-======
+kafs
+====
 
-Disk-based key/value store with transparent compression, encryption, and partitioning
+Kind-of-Awesome File System, with transparent encryption, zlib compression, and directory partitioning
 
 [![build status](https://secure.travis-ci.org/carlos8f/disker.png)](http://travis-ci.org/carlos8f/disker)
 
