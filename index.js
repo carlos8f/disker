@@ -63,6 +63,9 @@ module.exports = function disker (options) {
     },
     export: function (dest, cb) {
       // export the store's contents to the filesystem
+    },
+    destroy: function (cb) {
+      // rimraf all the files
     }
   };
 
