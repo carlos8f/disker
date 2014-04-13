@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-var cmd = require('commander');
+var cmd = require('commander')
+  , kafs = require('../')
 
 cmd
   .version(require('../package.json').version)
@@ -14,58 +15,114 @@ cmd
 cmd
   .command('init')
   .description('initialize volume options')
+  .action(setup(function (opts) {
+    console.log('init!');
+  }))
 
 cmd
   .command('mv <src> <dest>')
   .description('move a virtual path to another virtual path')
+  .action(setup(function (src, dest, opts) {
+    console.log('mv!', src, dest);
+  }))
 
 cmd
   .command('rm <path>')
-  .description('remove file from volume')
+  .description('remove virtual file from volume')
+  .action(setup(function (path, opts) {
+    console.log('rm!', path);
+  }))
 
 cmd
   .command('cat <path>')
-  .description('output the contents of a file')
+  .description('output the contents of a virtual file')
+  .action(setup(function (path, opts) {
+    console.log('cat!', path);
+  }))
 
 cmd
   .command('write <path>')
-  .description('write STDIN to a file at virtual path')
+  .description('write STDIN to a virtual file')
+  .action(setup(function (path, opts) {
+    console.log('write!', path);
+  }))
 
 cmd
   .command('create <path>')
-  .description('write STDIN to a new file at virtual path (will cause an error if file already exists)')
+  .description('write STDIN to a new virtual file (error if exists)')
+  .action(setup(function (path, opts) {
+    console.log('create!', path);
+  }))
 
 cmd
   .command('touch <path>')
   .description('touch the path')
+  .action(setup(function (path, opts) {
+    console.log('touch!', path);
+  }))
 
 cmd
   .command('test <path>')
   .description('returns 0 if virtual file/dir exists, 1 otherwise')
   .option('-f, --file', 'check for a virtual file')
   .option('-d, --dir', 'check for a virtual directory')
+  .action(setup(function (path, opts) {
+    console.log('test!', path);
+  }))
 
 cmd
   .command('export <dest>')
   .description('export the volume contents to new directory')
   .option('--exclude <glob>', 'exclude paths matching glob')
   .option('--include <glob>', 'include paths matching glob')
+  .action(setup(function (dest, opts) {
+    console.log('export!', dest);
+  }))
 
 cmd
   .command('import <src>')
   .description('import the contents of a directory')
   .option('--exclude <glob>', 'exclude paths matching glob')
   .option('--include <glob>', 'include paths matching glob')
+  .action(setup(function (src, opts) {
+    console.log('import!', src);
+  }))
 
 cmd
-  .command('mount [srcpath] <dstpath>')
+  .command('mount [src] <dest>')
   .description('mount the volume')
   .option('-r, --readonly', 'mount read-only')
+  .action(setup(function (src, dest, opts) {
+    console.log('mount!', src, dest);
+  }))
 
 cmd
   .command('destroy')
   .description('destroy the volume, located at [dir]')
   .option('-f, --force', 'force destruction without prompting')
   .option('-i, --init', 'initialize a new volume after destroying')
+  .action(setup(function (opts) {
+    console.log('destroy!');
+  }))
+
+cmd
+  .command('*')
+  .action(setup(function (opts) {
+    cmd.outputHelp();
+    process.exit(1);
+  }))
 
 cmd.parse(process.argv);
+
+function setup (cb) {
+  return function () {
+    var args = arguments;
+    if (cmd.cipher) {
+      cmd.password('password: ', function (password) {
+        cmd.password = password;
+        cb.apply(null, args);
+      });
+    }
+    else cb.apply(null, args);
+  };
+}

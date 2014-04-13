@@ -68,7 +68,6 @@ module.exports = function kafs (options) {
         kafs.writeFile(p, data, opts, cb);
       });
     },
-    writeSettings: function 
     // write a buffer to file
     writeFile: function (p, data, opts, cb) {
       if (typeof opts === 'function') {
