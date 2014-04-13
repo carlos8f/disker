@@ -1,7 +1,7 @@
 disker
 ======
 
-Virtual file system with transparent compression, encryption, and directory partitioning
+Disk-based key/value store with transparent compression, encryption, and partitioning
 
 [![build status](https://secure.travis-ci.org/carlos8f/disker.png)](http://travis-ci.org/carlos8f/disker)
 
@@ -15,8 +15,8 @@ strategy firm located in Aptos, CA and Washington, D.C.
 
 ### License: MIT
 
-- Copyright (C) 2013 Carlos Rodriguez (http://s8f.org/)
-- Copyright (C) 2013 Terra Eclipse, Inc. (http://www.terraeclipse.com/)
+- Copyright (C) 2014 Carlos Rodriguez (http://s8f.org/)
+- Copyright (C) 2014 Terra Eclipse, Inc. (http://www.terraeclipse.com/)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the &quot;Software&quot;), to deal

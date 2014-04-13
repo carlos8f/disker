@@ -1,7 +1,7 @@
 {
   "name": "disker",
   "version": "0.0.0",
-  "description": "Virtual file system with transparent compression, encryption, and directory partitioning",
+  "description": "Disk-based key/value store with transparent compression, encryption, and partitioning",
   "main": "index.js",
   "dependencies": {
     "event-stream": "^3.1.1",
