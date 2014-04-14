@@ -5,24 +5,19 @@ var fs = require('graceful-fs')
   , zlib = require('zlib')
   , es = require('event-stream')
   , rimraf = require('rimraf')
+  , idgen = require('idgen')
 
 module.exports = function kafs (options) {
   options || (options = {});
-
-  if (typeof options.home === 'undefined') {
-    if (typeof process.env.KAFS_VOLUME !== 'undefined') {
-      options.vol = process.env.KAFS_VOLUME;
-    }
-    else {
-      if (typeof process.env.HOME !== 'undefined') {
-        options.vol = process.env.HOME;
-      }
-      options.vol = path.join(options.home, '.kafs');
-    }
-  }
   if (typeof options.mode === 'undefined') options.mode = 0600;
   if (typeof options.dirMode === 'undefined') options.dirMode = 0700;
   if (typeof options.depth === 'undefined') options.depth = 3;
+  if (typeof options.gzip === 'undefined' && options.gunzip === 'undefined') options.gzip = options.gunzip = true;
+  if (!options.home) {
+    if (process.env.KAFS_HOME) options.home = process.env.KAFS_HOME;
+    else options.home = path.join(process.env.HOME, '.kafs');
+  }
+  if (!options.volume) options.volume = 'default';
 
   var kafs = {
     // option cascading
@@ -59,7 +54,43 @@ module.exports = function kafs (options) {
         parts.push(hash.charAt(idx));
       }
       parts.push(hash.substr(opts.depth));
-      return path.resolve(opts.home, path.join.apply(path, parts));
+      return path.resolve(opts.home, opts.volume, path.join.apply(path, parts));
+    },
+    init: function (opts, cb) {
+      if (typeof opts === 'function') {
+        cb = opts;
+        opts = {};
+      }
+      opts = kafs.augmentOpts(opts);
+      var dest = path.resolve(opts.home, opts.volume);
+      mkdirp(dest, opts.dirMode, function (err) {
+        if (err) return cb(err);
+        var confPath = path.join(dest, 'kafs.json');
+        fs.exists(confPath, function (exists) {
+          if (exists) return cb(new Error('volume already exists at ' + opts.volume + '. use `kafs destroy` to start over.'));
+          var optsCopy = {};
+          Object.keys(opts).forEach(function (k) {
+            if (k.match(/^(password|writeKey|key|home|_.*)$/) || opts[k] instanceof Object) return;
+            optsCopy[k] = opts[k];
+          });
+          if (!opts.writeKey) return writeConf();
+          opts.key = path.join(opts.home, opts.volume + '.key');
+          fs.exists(opts.key, function (exists) {
+            if (exists) return cb(new Error('key file already exists at ' + opts.key + '. please do not re-use keys.'));
+            fs.writeFile(opts.key, opts.password, {mode: 0600}, function (err) {
+              if (err) return cb(err);
+              writeConf();
+            });
+          });
+
+          function writeConf () {
+            fs.writeFile(confPath, JSON.stringify(optsCopy, null, 2), {code: opts.mode}, function (err) {
+              if (err) return cb(err);
+              cb();
+            });
+          }
+        });
+      });
     },
     // create a file, returning an error if the path already exists
     createFile: function (p, data, opts, cb) {
@@ -106,23 +137,7 @@ module.exports = function kafs (options) {
         var dir = path.dirname(dest);
         mkdirp(dir, opts.dirMode, function (err) {
           if (err) return cb(err);
-          // @todo: write file-specific opts (minus password) as encrypted meta file?
-          // would allow auto export
-          var confPath = path.join(opts.home, 'kafs.json');
-          fs.exists(confPath, function (exists) {
-            if (!exists) {
-              var optsCopy = {};
-              Object.keys(options).forEach(function (k) {
-                if (k === 'password') return;
-                optsCopy[k] = options[k];
-              });
-              fs.writeFile(confPath, JSON.stringify(optsCopy, null, 2), {code: opts.mode}, function (err) {
-                if (err) return cb(err);
-                fs.writeFile(dest, data, {mode: opts.mode}, cb);
-              });
-            }
-            else fs.writeFile(dest, data, {mode: opts.mode}, cb);
-          });
+          fs.writeFile(dest, data, {mode: opts.mode}, cb);
         });
       }
     },
@@ -151,7 +166,7 @@ module.exports = function kafs (options) {
         else possiblyGunzip(data);
 
         function possiblyGunzip (data) {
-          if (opts.gunzip || (opts.gzip && typeof opts.gunzip === 'undefined')) {
+          if (opts.gunzip) {
             zlib.gunzip(data, function (err, data) {
               if (err) return cb(err);
               if (opts.encoding) data = data.toString(opts.encoding);
@@ -173,16 +188,6 @@ module.exports = function kafs (options) {
       var dest = kafs.makePath(p, opts);
       var dir = path.dirname(dest);
       mkdirp.sync(dir, opts.dirMode);
-
-      var confPath = path.join(opts.home, 'kafs.json');
-      if (!fs.existsSync(confPath)) {
-        var optsCopy = {};
-        Object.keys(options).forEach(function (k) {
-          if (k === 'password') return;
-          optsCopy[k] = options[k];
-        });
-        fs.writeFileSync(confPath, JSON.stringify(optsCopy, null, 2), {code: opts.mode});
-      }
 
       var pipeline = [];
       if (opts.gzip) {
@@ -270,7 +275,11 @@ module.exports = function kafs (options) {
     },
     destroy: function (cb) {
       // rimraf all the files
-      rimraf(options.home, cb);
+      try {
+        fs.unlinkSync(path.join(options.home, options.volume + '.key'));
+      }
+      catch (e) {}
+      rimraf(path.join(options.home, options.volume), cb);
     }
   };
 
