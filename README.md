@@ -1,9 +1,7 @@
 kafs
 ====
 
-Kinda Awesome File System, with transparent encryption, zlib compression, and directory partitioning
-
-[![build status](https://secure.travis-ci.org/carlos8f/disker.png)](http://travis-ci.org/carlos8f/disker)
+Virtual file system with transparent encryption, gzip compression, and directory partitioning
 
 - - -
 

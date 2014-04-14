@@ -1,7 +1,7 @@
 {
   "name": "kafs",
   "version": "0.0.0",
-  "description": "Kinda Awesome File System, with transparent encryption, zlib compression, and directory partitioning",
+  "description": "Virtual file system with transparent encryption, gzip compression, and directory partitioning",
   "main": "index.js",
   "bin": "./bin/kafs",
   "dependencies": {
@@ -30,12 +30,14 @@
   "keywords": [
     "fs",
     "file",
-    "system",
     "security",
     "gzip",
     "utility",
     "flat",
-    "storage"
+    "storage",
+    "disk",
+    "encryption",
+    "crypto"
   ],
   "author": "Carlos Rodriguez <carlos@s8f.org> (http://s8f.org/)",
   "license": "MIT",
