@@ -26,27 +26,6 @@ cmd
   .action(setup('init', init))
 
 cmd
-  .command('mv <src> <dest>')
-  .description('move a virtual path to another virtual path')
-  .action(setup('mv', function (src, dest, opts) {
-    console.log('mv!', src, dest);
-  }))
-
-cmd
-  .command('rm <path>')
-  .description('remove virtual file from volume')
-  .action(setup('rm', function (path, opts) {
-    console.log('rm!', path);
-  }))
-
-cmd
-  .command('cat <path>')
-  .description('output the contents of a virtual file')
-  .action(setup('cat', function (path, opts) {
-    this.createReadStream(path, opts).pipe(process.stdout);
-  }))
-
-cmd
   .command('write <dest>')
   .description('write a file to the volume')
   .option('-f, --file <src>', 'read from file path. if not specified, will read STDIN')
@@ -57,10 +36,17 @@ cmd
   }))
 
 cmd
-  .command('create <path>')
-  .description('write STDIN to a new virtual file (error if exists)')
-  .action(setup('create', function (path, opts) {
-    console.log('create!', path);
+  .command('cat <path>')
+  .description('output the contents of a virtual file')
+  .action(setup('cat', function (path, opts) {
+    this.createReadStream(path, opts).pipe(process.stdout);
+  }))
+
+cmd
+  .command('rm <path>')
+  .description('remove virtual file from volume')
+  .action(setup('rm', function (path, opts) {
+    console.log('rm!', path);
   }))
 
 cmd
@@ -90,7 +76,7 @@ cmd
 
 cmd
   .command('import <src>')
-  .description('import the contents of a directory')
+  .description('import the contents of a directory into the volume')
   .option('--exclude <glob>', 'exclude paths matching glob')
   .option('--include <glob>', 'include paths matching glob')
   .action(setup('import', function (src, opts) {
