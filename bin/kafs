@@ -11,7 +11,8 @@ var cmd = require('commander')
 cmd
   .version(require('../package.json').version)
   .description(require('../package.json').description)
-  .option('-d, --datadir <dir>', 'kafs data dir (default: ~/.kafs or env.KAFS_DATA)')
+  .option('-d, --datadir <dir>', 'kafs data dir (default: ~/.kafs/data or env.KAFS_DATA)')
+  .option('-k, --keydir <dir>', 'kafs key dir (default: ~/.kafs/keys or env.KAFS_KEYS)')
   .option('-v, --volume <volume>', 'volume name (default: "default" or env.KAFS_VOLUME)')
 
 cmd
@@ -19,7 +20,6 @@ cmd
   .description('initialize volume options')
   .option('--cipher <cipher>', 'encryption cipher (default: aes-256-cbc)', String, 'aes-256-cbc')
   .option('--no-encrypt', 'do not use encryption')
-  .option('-p, --password', 'create a password instead of a key file')
   .option('--no-gzip', 'disable compression when storing')
   .option('--no-gunzip', 'disable uncompression when reading')
   .option('--depth <depth>', 'partition the data into directories of given depth (default: 3)', Number, 3)
@@ -109,7 +109,6 @@ cmd
   .command('destroy')
   .description('destroy the volume')
   .option('-f, --force', 'force destruction without prompting')
-  .option('-i, --init', 'initialize a new volume after destroying')
   .action(setup('destroy', function (opts) {
     var kafs = this;
     prompt('are you SURE you want to destroy the volume at ' + path.join(cmd.datadir, cmd.volume) + '? (no) ', function (resp) {
@@ -122,7 +121,6 @@ cmd
           console.error(err);
           process.exit(1);
         }
-        console.log('KABOOM.');
       });
     });
   }))
