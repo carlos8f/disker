@@ -13,10 +13,6 @@ module.exports = function kafs (options) {
   if (typeof options.dirMode === 'undefined') options.dirMode = 0700;
   if (typeof options.depth === 'undefined') options.depth = 3;
   if (typeof options.gzip === 'undefined' && options.gunzip === 'undefined') options.gzip = options.gunzip = true;
-  if (!options.home) {
-    if (process.env.KAFS_HOME) options.home = process.env.KAFS_HOME;
-    else options.home = path.join(process.env.HOME, '.kafs');
-  }
   if (!options.volume) options.volume = 'default';
 
   var kafs = {
@@ -54,7 +50,7 @@ module.exports = function kafs (options) {
         parts.push(hash.charAt(idx));
       }
       parts.push(hash.substr(opts.depth));
-      return path.resolve(opts.home, opts.volume, path.join.apply(path, parts));
+      return path.resolve(opts.datadir, opts.volume, path.join.apply(path, parts));
     },
     init: function (opts, cb) {
       if (typeof opts === 'function') {
@@ -62,24 +58,28 @@ module.exports = function kafs (options) {
         opts = {};
       }
       opts = kafs.augmentOpts(opts);
-      var dest = path.resolve(opts.home, opts.volume);
+      var dest = path.join(opts.datadir, opts.volume);
       mkdirp(dest, opts.dirMode, function (err) {
         if (err) return cb(err);
         var confPath = path.join(dest, 'kafs.json');
         fs.exists(confPath, function (exists) {
           if (exists) return cb(new Error('volume already exists at ' + opts.volume + '. use `kafs destroy` to start over.'));
           var optsCopy = {};
+          if (opts.writeKey) opts.key = idgen();
           Object.keys(opts).forEach(function (k) {
-            if (k.match(/^(password|writeKey|key|home|_.*)$/) || opts[k] instanceof Object) return;
+            if (k.match(/^(password|writeKey|datadir|keydir|_.*)$/) || opts[k] instanceof Object) return;
             optsCopy[k] = opts[k];
           });
           if (!opts.writeKey) return writeConf();
-          opts.key = path.join(opts.home, opts.volume + '.key');
-          fs.exists(opts.key, function (exists) {
-            if (exists) return cb(new Error('key file already exists at ' + opts.key + '. please do not re-use keys.'));
-            fs.writeFile(opts.key, opts.password, {mode: 0600}, function (err) {
-              if (err) return cb(err);
-              writeConf();
+          var keyDest = path.join(opts.keydir, opts.key);
+          mkdirp(path.dirname(keyDest), opts.dirMode, function (err) {
+            if (err) return cb(err);
+            fs.exists(keyDest, function (exists) {
+              if (exists) return cb(new Error('key file already exists at ' + opts.key + '. please do not re-use keys.'));
+              fs.writeFile(keyDest, opts.password, {mode: 0600}, function (err) {
+                if (err) return cb(err);
+                writeConf();
+              });
             });
           });
 
@@ -275,11 +275,7 @@ module.exports = function kafs (options) {
     },
     destroy: function (cb) {
       // rimraf all the files
-      try {
-        fs.unlinkSync(path.join(options.home, options.volume + '.key'));
-      }
-      catch (e) {}
-      rimraf(path.join(options.home, options.volume), cb);
+      rimraf(path.join(options.datadir, options.volume), cb);
     }
   };
 

@@ -11,7 +11,7 @@ var cmd = require('commander')
 cmd
   .version(require('../package.json').version)
   .description(require('../package.json').description)
-  .option('-h, --home <dir>', 'kafs home (default: ~/.kafs or env.KAFS_HOME)')
+  .option('-d, --datadir <dir>', 'kafs data dir (default: ~/.kafs or env.KAFS_DATA)')
   .option('-v, --volume <volume>', 'volume name (default: "default" or env.KAFS_VOLUME)')
 
 cmd
@@ -112,7 +112,7 @@ cmd
   .option('-i, --init', 'initialize a new volume after destroying')
   .action(setup('destroy', function (opts) {
     var kafs = this;
-    prompt('are you SURE you want to destroy the volume at ' + path.join(cmd.home, cmd.volume) + '? (no) ', function (resp) {
+    prompt('are you SURE you want to destroy the volume at ' + path.join(cmd.datadir, cmd.volume) + '? (no) ', function (resp) {
       if (!resp.match(/^y(es)?/i)) {
         console.error('canceling.');
         process.exit(1);
@@ -131,16 +131,21 @@ cmd.parse(process.argv);
 if (!cmd.args[0]) cmd.outputHelp();
 
 function setup (command, cb) {
-  if (!cmd.home) {
-    // autodetect volume location
-    if (process.env.KAFS_HOME) cmd.home = process.env.KAFS_HOME;
+  if (!cmd.datadir) {
+    if (process.env.KAFS_DATA) cmd.datadir = process.env.KAFS_DATA;
     else {
-      if (process.env.HOME) cmd.home = process.env.HOME;
-      cmd.home = path.join(cmd.home || '', '.kafs');
+      if (process.env.HOME) cmd.datadir = process.env.HOME;
+      cmd.datadir = path.join(cmd.datadir || '', '.kafs', 'data');
+    }
+  }
+  if (!cmd.keydir) {
+    if (process.env.KAFS_KEYS) cmd.keydir = process.env.KAFS_KEYS;
+    else {
+      if (process.env.HOME) cmd.keydir = process.env.HOME;
+      cmd.keydir = path.join(cmd.keydir || '', '.kafs', 'keys');
     }
   }
   if (!cmd.volume) {
-    // autodetect volume location
     if (process.env.KAFS_VOLUME) cmd.volume = process.env.KAFS_VOLUME;
     else cmd.volume = 'default';
   }
@@ -152,25 +157,10 @@ function setup (command, cb) {
     if (command.match(/^init|destroy$/)) {
       cb.apply(require('../')(cmd), args);
     }
-    else if (opts.password) {
-      prompt.password('password: ', function (password) {
-        cmd.password = password;
-        readVolume();
-      });
-    }
-    else {
-      fs.readFile(path.join(cmd.home, cmd.volume + '.key'), function (err, data) {
-        if (err) {
-          console.error('invalid key location: ' + cmd.key);
-          process.exit(1);
-        }
-        cmd.password = data;
-        readVolume();
-      });
-    }
+    else readVolume();
 
     function readVolume () {
-      var confPath = path.join(cmd.home, cmd.volume, 'kafs.json');
+      var confPath = path.join(cmd.datadir, cmd.volume, 'kafs.json');
       fs.exists(confPath, function (exists) {
         if (!exists) {
           console.error('volume does not exist: ' + cmd.volume);
@@ -180,7 +170,17 @@ function setup (command, cb) {
         Object.keys(baseOpts).forEach(function (k) {
           if (typeof cmd[k] === 'undefined') cmd[k] = baseOpts[k];
         });
-        cb.apply(require('../')(cmd), args);
+        if (cmd.key) {
+          fs.readFile(path.join(cmd.keydir, cmd.key), function (err, data) {
+            if (err) {
+              console.error('key not found: ' + cmd.key);
+              process.exit(1);
+            }
+            cmd.password = data;
+            cb.apply(require('../')(cmd), args);
+          });
+        }
+        else cb.apply(require('../')(cmd), args);
       });
     }
   };
@@ -194,25 +194,10 @@ function init (opts) {
     key: 'volume',
     default: 'default',
     validate: function (val) {
-      if (fs.existsSync(path.join(cmd.home, val))) throw new Error('volume already exists');
+      if (fs.existsSync(path.join(cmd.datadir, val))) throw new Error('volume already exists');
     }
   });
-  if (opts.password) {
-    questions.push({
-      label: 'create password',
-      key: 'password',
-      type: 'password'
-    });
-    questions.push({
-      label: 'confirm password',
-      key: 'password2',
-      type: 'password',
-      validate: function (val) {
-        return val === this.password;
-      }
-    });
-  }
-  else if (opts.encrypt) {
+  if (opts.encrypt) {
     opts.password = crypto.randomBytes(32);
     opts.writeKey = true;
   }
