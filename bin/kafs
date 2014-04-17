@@ -108,11 +108,10 @@ cmd
   }))
 
 cmd
-  .command('add-key')
-  .description('add a key to the keys volume')
-  .option('-f, --file', 'read key from file. if not specified, will read STDIN')
+  .command('add-key <key>')
+  .description('add a key to the keys volume. will read STDIN if no argument specified.')
   .option('--format <format>', 'specify key format')
-  .action(setup(function (opts) {
+  .action(setup(function (arg, opts) {
     console.log('add-key!');
   }))
 
@@ -130,6 +129,8 @@ function setup (cb) {
   return function () {
     var args = arguments
       , opts = args[args.length - 1]
+
+
 
     switch (opts._name) {
       case 'init':
