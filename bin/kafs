@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 
 var cmd = require('commander')
+  , prompt = require('cli-prompt')
   , kafs = require('../')
 
 cmd
   .version(require('../package.json').version)
   .description(require('../package.json').description)
-  .option('-k, --keys <dir>', 'path to key volume (default: ~/.kafs/keys or env.KAFS_KEYS)')
-  .option('-v, --volume <path>', 'volume path (default: "~/.kafs/default" or env.KAFS_VOLUME)')
+  .option('-k, --keyring <dir>', 'path to keyring volume (default: ~/.kafs/_keyring or env.KAFS_KEYRING)')
+  .option('-v, --volume <path>', 'volume path (default: ~/.kafs/default or env.KAFS_VOLUME)')
 
 cmd
   .command('init <path>')
   .description('create a new volume at the given path')
-  .option('-p, --password', 'protect the private key with a password')
-  .option('--depth <depth>', 'partition the data into directories of given depth (default: 3)', Number, 3)
   .action(setup(function (path, opts) {
     console.log('init!', path);
   }))
@@ -109,39 +108,70 @@ cmd
 
 cmd
   .command('add-key <key>')
-  .description('add a key to the keys volume. will read STDIN if no argument specified.')
-  .option('--format <format>', 'specify key format')
+  .description('add a key to the keyring. will read STDIN if no argument specified.')
   .action(setup(function (arg, opts) {
     console.log('add-key!');
   }))
 
 cmd
   .command('check-key <id>')
-  .description('returns 0 if the keys volume has the key, 1 otherwise')
+  .description('returns 0 if the keyring has the key, 1 otherwise')
   .action(setup(function (id, opts) {
     console.log('check-key!');
   }))
 
+var volume;
+
+kafs.env.detect();
 cmd.parse(process.argv);
-if (!cmd.args[0]) cmd.outputHelp();
+
+if (typeof cmd.args[0] === 'string' && !cmd.listeners(cmd.args[0]).length) cmd.help();
+if (!cmd.args.length) {
+  setup(function () {
+    cmd.help();
+  })(cmd);
+}
 
 function setup (cb) {
   return function () {
     var args = arguments
       , opts = args[args.length - 1]
 
-
-
     switch (opts._name) {
       case 'init':
-        // no volume exists yet
+        // init a new volume
         break;
       case 'add-key': case 'check-key':
         // check keys volume
-        break;
+        process.env.KAFS_VOLUME = process.env.KAFS_KEYRING;
       default:
         // load volume
-        kafs.load(opts.volume, 
+        kafs.load(process.env.KAFS_VOLUME, {keyring: process.env.KAFS_KEYRING}, function (err, vol) {
+          if (err && err.path && err.path.match(/keyring/)) {
+            prompt("Looks like you haven't set up a keyring yet. Set one up now? (y) ", function (resp) {
+              if (resp.match(/^(y.*|$)/i)) {
+                prompt('Enter a password to protect the keyring with (optional): ', true, function (password) {
+                  kafs.volume.init(process.env.KAFS_KEYRING, {keypair: true, password: password || null}, function (err, keyring) {
+                    if (err) throw err;
+                    kafs.volume.init(process.env.KAFS_VOLUME, function (err, vol) {
+                      if (err) throw err;
+                      console.log('Created new keyring: ' + keyring.fingerprint);
+                    });
+                  });
+                });
+              }
+              else {
+                console.error('Cancelling.');
+                process.exit(1);
+              }
+            });
+            return;
+          }
+          else throw err;
+          if (err) return cb(err);
+          volume = vol;
+          action();
+        });
     }
 
     function action () {

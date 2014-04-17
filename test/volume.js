@@ -27,6 +27,7 @@ describe('vol', function () {
       assert.ifError(err);
       assert(vol.created > 1397612079059);
       volume = vol;
+      console.log(volume);
       done();
     });
   });
