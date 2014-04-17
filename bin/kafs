@@ -2,67 +2,66 @@
 
 var cmd = require('commander')
   , kafs = require('../')
-  , prompt = require('cli-prompt')
-  , fs = require('graceful-fs')
-  , path = require('path')
-  , idgen = require('idgen')
-  , crypto = require('crypto')
 
 cmd
   .version(require('../package.json').version)
   .description(require('../package.json').description)
-  .option('-d, --datadir <dir>', 'kafs data dir (default: ~/.kafs/data or env.KAFS_DATA)')
-  .option('-k, --keydir <dir>', 'kafs key dir (default: ~/.kafs/keys or env.KAFS_KEYS)')
-  .option('-v, --volume <volume>', 'volume name (default: "default" or env.KAFS_VOLUME)')
+  .option('-k, --keys <dir>', 'path to key volume (default: ~/.kafs/keys or env.KAFS_KEYS)')
+  .option('-v, --volume <path>', 'volume path (default: "~/.kafs/default" or env.KAFS_VOLUME)')
 
 cmd
-  .command('init')
-  .description('initialize volume options')
-  .option('--cipher <cipher>', 'encryption cipher (default: aes-256-cbc)', String, 'aes-256-cbc')
-  .option('--no-encrypt', 'do not use encryption')
-  .option('--no-gzip', 'disable compression when storing')
-  .option('--no-gunzip', 'disable uncompression when reading')
+  .command('init <path>')
+  .description('create a new volume at the given path')
+  .option('-p, --password', 'protect the private key with a password')
   .option('--depth <depth>', 'partition the data into directories of given depth (default: 3)', Number, 3)
-  .action(setup('init', init))
+  .action(setup(function (path, opts) {
+    console.log('init!', path);
+  }))
 
 cmd
-  .command('write <dest>')
+  .command('info')
+  .description('get info about the volume')
+  .action(setup(function (opts) {
+    console.log('info!', path);
+  }))
+
+cmd
+  .command('write <path>')
   .description('write a file to the volume')
   .option('-f, --file <src>', 'read from file path. if not specified, will read STDIN')
-  .action(setup('write', function (dest, opts) {
-    var writeStream = this.createWriteStream(dest, opts);
-    if (opts.file) fs.createReadStream(opts.file).pipe(writeStream);
-    else process.stdin.pipe(writeStream);
+  .option('-c, --create', 'will error if path already exists')
+  .action(setup(function (path, opts) {
+    console.log('write!', path);
   }))
 
 cmd
   .command('cat <path>')
   .description('output the contents of a virtual file')
-  .action(setup('cat', function (path, opts) {
-    this.createReadStream(path, opts).pipe(process.stdout);
+  .action(setup(function (path, opts) {
+    console.log('cat!', path);
   }))
 
 cmd
   .command('rm <path>')
   .description('remove virtual file from volume')
-  .action(setup('rm', function (path, opts) {
+  .action(setup(function (path, opts) {
     console.log('rm!', path);
   }))
 
 cmd
   .command('touch <path>')
   .description('touch the path')
-  .action(setup('touch', function (path, opts) {
+  .action(setup(function (path, opts) {
     console.log('touch!', path);
   }))
 
 cmd
-  .command('test <path>')
-  .description('returns 0 if virtual file/dir exists, 1 otherwise')
+  .command('stat <path>')
   .option('-f, --file', 'check for a virtual file')
   .option('-d, --dir', 'check for a virtual directory')
-  .action(setup('test', function (path, opts) {
-    console.log('test!', path);
+  .option('-t, --test', 'return 0 if virtual file/dir exists, 1 otherwise')
+  .action(setup(function (path, opts) {
+    console.log('stat!', path);
   }))
 
 cmd
@@ -70,7 +69,7 @@ cmd
   .description('export the volume contents to new directory')
   .option('--exclude <glob>', 'exclude paths matching glob')
   .option('--include <glob>', 'include paths matching glob')
-  .action(setup('export', function (dest, opts) {
+  .action(setup(function (dest, opts) {
     console.log('export!', dest);
   }))
 
@@ -79,7 +78,7 @@ cmd
   .description('import the contents of a directory into the volume')
   .option('--exclude <glob>', 'exclude paths matching glob')
   .option('--include <glob>', 'include paths matching glob')
-  .action(setup('import', function (src, opts) {
+  .action(setup(function (src, opts) {
     console.log('import!', src);
   }))
 
@@ -87,114 +86,65 @@ cmd
   .command('mount [src] <dest>')
   .description('mount the volume')
   .option('-r, --readonly', 'mount read-only')
-  .action(setup('mount', function (src, dest, opts) {
+  .action(setup(function (src, dest, opts) {
     console.log('mount!', src, dest);
+  }))
+
+cmd
+  .command('server')
+  .description('expose volume via HTTP server')
+  .option('-p, --port', 'port to listen on')
+  .option('-r, --root', 'virtual root path')
+  .action(setup(function (opts) {
+    console.log('server!');
   }))
 
 cmd
   .command('destroy')
   .description('destroy the volume')
   .option('-f, --force', 'force destruction without prompting')
-  .action(setup('destroy', function (opts) {
-    var kafs = this;
-    prompt('are you SURE you want to destroy the volume at ' + path.join(cmd.datadir, cmd.volume) + '? (no) ', function (resp) {
-      if (!resp.match(/^y(es)?/i)) {
-        console.error('canceling.');
-        process.exit(1);
-      }
-      kafs.destroy(function (err) {
-        if (err) {
-          console.error(err);
-          process.exit(1);
-        }
-      });
-    });
+  .action(setup(function (opts) {
+    console.log('destroy!');
+  }))
+
+cmd
+  .command('add-key')
+  .description('add a key to the keys volume')
+  .option('-f, --file', 'read key from file. if not specified, will read STDIN')
+  .option('--format <format>', 'specify key format')
+  .action(setup(function (opts) {
+    console.log('add-key!');
+  }))
+
+cmd
+  .command('check-key <id>')
+  .description('returns 0 if the keys volume has the key, 1 otherwise')
+  .action(setup(function (id, opts) {
+    console.log('check-key!');
   }))
 
 cmd.parse(process.argv);
 if (!cmd.args[0]) cmd.outputHelp();
 
-function setup (command, cb) {
-  if (!cmd.datadir) {
-    if (process.env.KAFS_DATA) cmd.datadir = process.env.KAFS_DATA;
-    else {
-      if (process.env.HOME) cmd.datadir = process.env.HOME;
-      cmd.datadir = path.join(cmd.datadir || '', '.kafs', 'data');
-    }
-  }
-  if (!cmd.keydir) {
-    if (process.env.KAFS_KEYS) cmd.keydir = process.env.KAFS_KEYS;
-    else {
-      if (process.env.HOME) cmd.keydir = process.env.HOME;
-      cmd.keydir = path.join(cmd.keydir || '', '.kafs', 'keys');
-    }
-  }
-  if (!cmd.volume) {
-    if (process.env.KAFS_VOLUME) cmd.volume = process.env.KAFS_VOLUME;
-    else cmd.volume = 'default';
-  }
-
+function setup (cb) {
   return function () {
-    var args = arguments;
-    var opts = args[args.length - 1];
-    if (typeof opts.password === 'function') opts.password = false;
-    if (command.match(/^init|destroy$/)) {
-      cb.apply(require('../')(cmd), args);
-    }
-    else readVolume();
+    var args = arguments
+      , opts = args[args.length - 1]
 
-    function readVolume () {
-      var confPath = path.join(cmd.datadir, cmd.volume, 'kafs.json');
-      fs.exists(confPath, function (exists) {
-        if (!exists) {
-          console.error('volume does not exist: ' + cmd.volume);
-          process.exit(1);
-        }
-        var baseOpts = require(confPath);
-        Object.keys(baseOpts).forEach(function (k) {
-          if (typeof cmd[k] === 'undefined') cmd[k] = baseOpts[k];
-        });
-        if (cmd.key) {
-          fs.readFile(path.join(cmd.keydir, cmd.key), function (err, data) {
-            if (err) {
-              console.error('key not found: ' + cmd.key);
-              process.exit(1);
-            }
-            cmd.password = data;
-            cb.apply(require('../')(cmd), args);
-          });
-        }
-        else cb.apply(require('../')(cmd), args);
-      });
+    switch (opts._name) {
+      case 'init':
+        // no volume exists yet
+        break;
+      case 'add-key': case 'check-key':
+        // check keys volume
+        break;
+      default:
+        // load volume
+        kafs.load(opts.volume, 
+    }
+
+    function action () {
+      cb.apply(null, args);
     }
   };
-}
-
-function init (opts) {
-  var kafs = this;
-  var questions = [];
-  questions.push({
-    label: 'volume name',
-    key: 'volume',
-    default: 'default',
-    validate: function (val) {
-      if (fs.existsSync(path.join(cmd.datadir, val))) throw new Error('volume already exists');
-    }
-  });
-  if (opts.encrypt) {
-    opts.password = crypto.randomBytes(32);
-    opts.writeKey = true;
-  }
-  else {
-    opts.cipher = false;
-  }
-
-  delete opts.encrypt;
-
-  prompt.multi(questions, function (input) {
-    opts.volume = input.volume;
-    kafs.init(opts, function (err) {
-      if (err) return console.error(err);
-    });
-  });
 }

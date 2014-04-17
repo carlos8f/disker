@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "description": "Virtual file system with transparent encryption, gzip compression, and directory partitioning",
   "main": "index.js",
-  "bin": "./bin/kafs",
+  "bin": {
+    "kafs": "./bin/kafs",
+    "kafs-key": "./bin/kafs-key"
+  },
   "dependencies": {
     "cli-prompt": "^0.4.0",
     "commander": "^2.2.0",
