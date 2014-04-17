@@ -7,115 +7,115 @@ var cmd = require('commander')
 cmd
   .version(require('../package.json').version)
   .description(require('../package.json').description)
-  .option('-k, --keyring <dir>', 'path to keyring volume (default: ~/.kafs/_keyring or env.KAFS_KEYRING)')
-  .option('-v, --volume <path>', 'volume path (default: ~/.kafs/default or env.KAFS_VOLUME)')
+  .option('-k, --keyring <dir>', 'Path to keyring volume (default: ~/.kafs/_keyring or env.KAFS_KEYRING)')
+  .option('-v, --volume <path>', 'Volume path (default: ~/.kafs/default or env.KAFS_VOLUME)')
 
 cmd
   .command('init <path>')
-  .description('create a new volume at the given path')
+  .description('Create a new volume at the given path')
   .action(setup(function (path, opts) {
     console.log('init!', path);
   }))
 
 cmd
   .command('info')
-  .description('get info about the volume')
+  .description('Get info about the volume')
   .action(setup(function (opts) {
     console.log('info!', path);
   }))
 
 cmd
   .command('write <path>')
-  .description('write a file to the volume')
-  .option('-f, --file <src>', 'read from file path. if not specified, will read STDIN')
-  .option('-c, --create', 'will error if path already exists')
+  .description('Write a file to the volume')
+  .option('-f, --file <src>', 'Read from file path. if not specified, will read STDIN')
+  .option('-c, --create', 'Will error if path already exists')
   .action(setup(function (path, opts) {
     console.log('write!', path);
   }))
 
 cmd
   .command('cat <path>')
-  .description('output the contents of a virtual file')
+  .description('Output the contents of a virtual file')
   .action(setup(function (path, opts) {
     console.log('cat!', path);
   }))
 
 cmd
   .command('rm <path>')
-  .description('remove virtual file from volume')
+  .description('Remove virtual file from volume')
   .action(setup(function (path, opts) {
     console.log('rm!', path);
   }))
 
 cmd
   .command('touch <path>')
-  .description('touch the path')
+  .description('Touch the path')
   .action(setup(function (path, opts) {
     console.log('touch!', path);
   }))
 
 cmd
   .command('stat <path>')
-  .option('-f, --file', 'check for a virtual file')
-  .option('-d, --dir', 'check for a virtual directory')
-  .option('-t, --test', 'return 0 if virtual file/dir exists, 1 otherwise')
+  .option('-f, --file', 'Check for a virtual file')
+  .option('-d, --dir', 'Check for a virtual directory')
+  .option('-t, --test', 'Return 0 if virtual file/dir exists, 1 otherwise')
   .action(setup(function (path, opts) {
     console.log('stat!', path);
   }))
 
 cmd
   .command('export <dest>')
-  .description('export the volume contents to new directory')
-  .option('--exclude <glob>', 'exclude paths matching glob')
-  .option('--include <glob>', 'include paths matching glob')
+  .description('Export the volume contents to new directory')
+  .option('--exclude <glob>', 'Exclude paths matching glob')
+  .option('--include <glob>', 'Include paths matching glob')
   .action(setup(function (dest, opts) {
     console.log('export!', dest);
   }))
 
 cmd
   .command('import <src>')
-  .description('import the contents of a directory into the volume')
-  .option('--exclude <glob>', 'exclude paths matching glob')
-  .option('--include <glob>', 'include paths matching glob')
+  .description('Import the contents of a directory into the volume')
+  .option('--exclude <glob>', 'Exclude paths matching glob')
+  .option('--include <glob>', 'Include paths matching glob')
   .action(setup(function (src, opts) {
     console.log('import!', src);
   }))
 
 cmd
   .command('mount [src] <dest>')
-  .description('mount the volume')
-  .option('-r, --readonly', 'mount read-only')
+  .description('Mount the volume')
+  .option('-r, --readonly', 'Mount read-only')
   .action(setup(function (src, dest, opts) {
     console.log('mount!', src, dest);
   }))
 
 cmd
   .command('server')
-  .description('expose volume via HTTP server')
-  .option('-p, --port', 'port to listen on')
-  .option('-r, --root', 'virtual root path')
+  .description('Expose volume via HTTP server')
+  .option('-p, --port', 'Port to listen on')
+  .option('-r, --root', 'Virtual root path')
   .action(setup(function (opts) {
     console.log('server!');
   }))
 
 cmd
   .command('destroy')
-  .description('destroy the volume')
-  .option('-f, --force', 'force destruction without prompting')
+  .description('Destroy the volume')
+  .option('-f, --force', 'Force destruction without prompting')
   .action(setup(function (opts) {
     console.log('destroy!');
   }))
 
 cmd
   .command('add-key <key>')
-  .description('add a key to the keyring. will read STDIN if no argument specified.')
+  .description('Add a key to the keyring. Will read STDIN if no argument specified')
   .action(setup(function (arg, opts) {
     console.log('add-key!');
   }))
 
 cmd
   .command('check-key <id>')
-  .description('returns 0 if the keyring has the key, 1 otherwise')
+  .description('Returns 0 if the keyring has the key, 1 otherwise')
   .action(setup(function (id, opts) {
     console.log('check-key!');
   }))
@@ -167,8 +167,7 @@ function setup (cb) {
             });
             return;
           }
-          else throw err;
-          if (err) return cb(err);
+          else if (err) return cb(err);
           volume = vol;
           action();
         });
