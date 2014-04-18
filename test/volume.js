@@ -146,4 +146,41 @@ describe('vol', function () {
       done();
     });
   });
+
+  it('read encrypted', function (done) {
+    volume.read('tests/encrypted/README.md', function (err, stream) {
+      assert.ifError(err);
+      // @todo: assert using hash
+      var content = '';
+      stream.on('data', function (data) {
+        content += data;
+      });
+      stream.on('end', function () {
+        assert(content.match(/Virtual file system/));
+        done();
+      });
+    });
+  });
+
+  it('write gzip/encrypted', function (done) {
+    volume.write('tests/gzip+encrypted/README.md', {gzip: true, cipher: 'aes-256-cbc'}, function (err, stream) {
+      assert.ifError(err);
+      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+        .pipe(stream)
+        .on('finish', done);
+    });
+  });
+
+  it('stat encrypted', function (done) {
+    volume.stat('tests/gzip+encrypted/README.md', function (err, stat) {
+      assert.ifError(err);
+      assert.equal(stat.cipher, 'aes-256-cbc');
+      assert(stat.gzip);
+      assert(stat.digest);
+      assert(stat.digest_final);
+      assert(stat.digest != stat.digest_final);
+      assert.notEqual(stat.size_encoded, stat.size_raw);
+      done();
+    });
+  });
 });
