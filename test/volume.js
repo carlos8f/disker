@@ -56,10 +56,26 @@ describe('vol', function () {
   });
 
   it('write', function (done) {
-    done();
+    volume.write('tests/README.md', function (err, stream) {
+      assert.ifError(err);
+      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+        .pipe(stream)
+        .on('end', done);
+    });
   });
 
-  it('read message', function (done) {
-    done();
+  it('read', function (done) {
+    volume.read('tests/README.md', function (err, stream) {
+      assert.ifError(err);
+      stream.setEncoding('utf8');
+      var content = '';
+      stream.on('data', function (data) {
+        content += data;
+      });
+      stream.on('end', function () {
+        console.log(content);
+        done();
+      });
+    });
   });
 });
