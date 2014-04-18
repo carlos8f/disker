@@ -101,6 +101,8 @@ describe('vol', function () {
   it('stat gzipped', function (done) {
     volume.stat('tests/gzip/README.md', function (err, stat) {
       assert.ifError(err);
+      assert(stat.gzip);
+      assert(!stat.cipher);
       assert(stat.digest);
       assert(stat.digest_final);
       assert(stat.digest != stat.digest_final);
@@ -135,7 +137,8 @@ describe('vol', function () {
   it('stat encrypted', function (done) {
     volume.stat('tests/encrypted/README.md', function (err, stat) {
       assert.ifError(err);
-      console.log(stat);
+      assert.equal(stat.cipher, 'aes-256-cbc');
+      assert(!stat.gzip);
       assert(stat.digest);
       assert(stat.digest_final);
       assert(stat.digest != stat.digest_final);
