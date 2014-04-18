@@ -64,6 +64,16 @@ describe('vol', function () {
     });
   });
 
+  it('stat', function (done) {
+    volume.stat('tests/README.md', function (err, stat) {
+      assert.ifError(err);
+      assert(stat.digest);
+      assert(!stat.digest_final);
+      assert.equal(stat.size_encoded, stat.size_raw);
+      done();
+    });
+  });
+
   it('read', function (done) {
     volume.read('tests/README.md', function (err, stream) {
       assert.ifError(err);
@@ -73,7 +83,42 @@ describe('vol', function () {
         content += data;
       });
       stream.on('end', function () {
-        console.log(content);
+        assert(content.match(/Virtual file system/));
+        done();
+      });
+    });
+  });
+
+  it('write gzipped', function (done) {
+    volume.write('tests/gzip/README.md', {gzip: true}, function (err, stream) {
+      assert.ifError(err);
+      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+        .pipe(stream)
+        .on('finish', done);
+    });
+  });
+
+  it('stat gzipped', function (done) {
+    volume.stat('tests/gzip/README.md', function (err, stat) {
+      assert.ifError(err);
+      assert.ifError(err);
+      assert(stat.digest);
+      assert(stat.digest_final);
+      assert(stat.digest != stat.digest_final);
+      assert.notEqual(stat.size_encoded, stat.size_raw);
+      done();
+    });
+  });
+
+  it('read gzipped', function (done) {
+    volume.read('tests/gzip/README.md', function (err, stream) {
+      assert.ifError(err);
+      var content = '';
+      stream.on('data', function (data) {
+        content += data;
+      });
+      stream.on('end', function () {
+        assert(content.match(/Virtual file system/));
         done();
       });
     });
