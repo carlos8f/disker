@@ -60,7 +60,7 @@ describe('vol', function () {
       assert.ifError(err);
       require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
         .pipe(stream)
-        .on('end', done);
+        .on('finish', done);
     });
   });
 
