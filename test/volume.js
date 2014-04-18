@@ -101,7 +101,6 @@ describe('vol', function () {
   it('stat gzipped', function (done) {
     volume.stat('tests/gzip/README.md', function (err, stat) {
       assert.ifError(err);
-      assert.ifError(err);
       assert(stat.digest);
       assert(stat.digest_final);
       assert(stat.digest != stat.digest_final);
@@ -121,6 +120,27 @@ describe('vol', function () {
         assert(content.match(/Virtual file system/));
         done();
       });
+    });
+  });
+
+  it('write encrypted', function (done) {
+    volume.write('tests/encrypted/README.md', {cipher: 'aes-256-cbc'}, function (err, stream) {
+      assert.ifError(err);
+      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+        .pipe(stream)
+        .on('finish', done);
+    });
+  });
+
+  it('stat encrypted', function (done) {
+    volume.stat('tests/encrypted/README.md', function (err, stat) {
+      assert.ifError(err);
+      console.log(stat);
+      assert(stat.digest);
+      assert(stat.digest_final);
+      assert(stat.digest != stat.digest_final);
+      assert.notEqual(stat.size_encoded, stat.size_raw);
+      done();
     });
   });
 });
