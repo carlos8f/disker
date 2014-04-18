@@ -9,8 +9,8 @@ describe('vol', function () {
     });
   });
 
-  it('init', function (done) {
-    kafs.volume.init(p, function (err, vol) {
+  it('init keyring', function (done) {
+    kafs.volume.init(kafs.path.join(p, 'keyring'), {keypair: true}, function (err, vol) {
       assert.ifError(err);
       assert(vol.created > 1397612079059);
       assert.strictEqual(vol.id.length, 16);
@@ -22,12 +22,35 @@ describe('vol', function () {
     });
   });
 
-  it('read', function (done) {
-    kafs.load(p, function (err, vol) {
+  it('load keyring', function (done) {
+    kafs.load(kafs.path.join(p, 'keyring'), function (err, vol) {
       assert.ifError(err);
       assert(vol.created > 1397612079059);
       volume = vol;
-      console.log(volume);
+      done();
+    });
+  });
+
+  it('init data', function (done) {
+    kafs.volume.init(kafs.path.join(p, 'data'), {keyring: kafs.path.join(p, 'keyring')}, function (err, vol) {
+      assert.ifError(err);
+      assert(vol.created > 1397612079059);
+      assert.strictEqual(vol.id.length, 16);
+      assert(vol.id !== volume.id);
+      assert(!vol.pubkey);
+      assert(!vol.fingerprint);
+      assert.strictEqual(vol.depth, 3);
+      assert.strictEqual(vol.clock, 0);
+
+      done();
+    });
+  });
+
+  it('load data', function (done) {
+    kafs.load(kafs.path.join(p, 'data'), {keyring: kafs.path.join(p, 'keyring')}, function (err, vol) {
+      assert.ifError(err);
+      assert.strictEqual(kafs.meta.stringify(vol.keyring), kafs.meta.stringify(volume));
+      volume = vol;
       done();
     });
   });
