@@ -17,7 +17,7 @@ cmd
   .option('--password', 'Encrypt volume with password (implies --keypair)')
   .action(setup(function (path, opts) {
     if (opts.password) {
-      function reConfirm () {
+      (function reConfirm () {
         prompt.password('Create a password: ', function (password) {
           prompt.password('Confirm password: ', function (password2) {
             if (password !== password2) return reConfirm();
@@ -26,7 +26,7 @@ cmd
             doInit();
           });
         });
-      }
+      })();
     }
     else doInit();
 
