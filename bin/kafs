@@ -11,10 +11,31 @@ cmd
   .option('-v, --volume <path>', 'Volume path (default: ~/.kafs/default or env.KAFS_VOLUME)')
 
 cmd
-  .command('init <path>')
+  .command('init [path]')
   .description('Create a new volume at the given path')
+  .option('--keypair', 'Generate a keypair to enable rsa encryption')
+  .option('--password', 'Encrypt volume with password (implies --keypair)')
   .action(setup(function (path, opts) {
-    console.log('init!', path);
+    if (opts.password) {
+      function reConfirm () {
+        prompt.password('Create a password: ', function (password) {
+          prompt.password('Confirm password: ', function (password2) {
+            if (password !== password2) return reConfirm();
+            opts.password = password;
+            opts.keypair = true;
+            doInit();
+          });
+        });
+      }
+    }
+    else doInit();
+
+    function doInit () {
+      kafs.volume.init(path || process.cwd(), opts, function (err, vol) {
+        if (err) throw err;
+        console.log('+', vol.id);
+      });
+    }
   }))
 
 cmd
@@ -125,7 +146,7 @@ var volume;
 kafs.env.detect();
 cmd.parse(process.argv);
 
-if (typeof cmd.args[0] === 'string' && !cmd.listeners(cmd.args[0]).length) cmd.help();
+if (typeof cmd.args[cmd.args.length - 1] === 'string') cmd.help();
 if (!cmd.args.length) {
   setup(function () {
     cmd.help();
@@ -140,6 +161,7 @@ function setup (cb) {
     switch (opts._name) {
       case 'init':
         // init a new volume
+        action();
         break;
       case 'add-key': case 'check-key':
         // check keys volume
