@@ -35,7 +35,7 @@ cmd
     function doInit () {
       kafs.volume.init(path || process.cwd(), opts, function (err, vol) {
         if (err) throw err;
-        console.log('+', vol.id);
+        console.log('+', vol.id, vol.path());
       });
     }
   }))
@@ -175,10 +175,10 @@ function setup (cb) {
                 var args = ['init', process.env.KAFS_KEYRING, '--keypair'];
                 prompt('Encrypt keyring with password? (y): ', function (resp) {
                   if (resp.match(/^(y.*|$)/i)) args.push('--password');
-                  spawn(__filename, args, {stdio: 'inherit'});
-                  proc.on('exit', function () {
-                    spawn(__filename, ['init', process.env.KAFS_VOLUME], {stdio: 'inherit'});
-                  });
+                  spawn(__filename, args, {stdio: 'inherit'})
+                    .on('exit', function () {
+                      spawn(__filename, ['init', process.env.KAFS_VOLUME], {stdio: 'inherit'});
+                    });
                 });
               }
               else action();
