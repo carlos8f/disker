@@ -3,6 +3,7 @@
 var cmd = require('commander')
   , prompt = require('cli-prompt')
   , kafs = require('../')
+  , spawn = require('child_process').spawn
   , volume
 
 cmd
@@ -174,7 +175,10 @@ function setup (cb) {
                 var args = ['init', process.env.KAFS_KEYRING, '--keypair'];
                 prompt('Encrypt keyring with password? (y): ', function (resp) {
                   if (resp.match(/^(y.*|$)/i)) args.push('--password');
-                  var proc = require('child_process').spawn(__filename, args, {stdio: 'inherit'});
+                  spawn(__filename, args, {stdio: 'inherit'});
+                  proc.on('exit', function () {
+                    spawn(__filename, ['init', process.env.KAFS_VOLUME], {stdio: 'inherit'});
+                  });
                 });
               }
               else action();
