@@ -3,6 +3,7 @@
 var cmd = require('commander')
   , prompt = require('cli-prompt')
   , kafs = require('../')
+  , volume
 
 cmd
   .version(require('../package.json').version)
@@ -42,7 +43,7 @@ cmd
   .command('info')
   .description('Get info about the volume')
   .action(setup(function (opts) {
-    console.log('info!', path);
+    console.log(JSON.stringify(volume, null, 2));
   }))
 
 cmd
@@ -141,8 +142,6 @@ cmd
     console.log('check-key!');
   }))
 
-var volume;
-
 kafs.env.detect();
 cmd.parse(process.argv);
 
@@ -172,20 +171,13 @@ function setup (cb) {
           if (err && err.path && err.path.match(/keyring/)) {
             prompt("Looks like you haven't set up a keyring yet. Set one up now? (y) ", function (resp) {
               if (resp.match(/^(y.*|$)/i)) {
-                prompt('Enter a password to protect the keyring with (optional): ', true, function (password) {
-                  kafs.volume.init(process.env.KAFS_KEYRING, {keypair: true, password: password || null}, function (err, keyring) {
-                    if (err) throw err;
-                    kafs.volume.init(process.env.KAFS_VOLUME, function (err, vol) {
-                      if (err) throw err;
-                      console.log('Created new keyring: ' + keyring.fingerprint);
-                    });
-                  });
+                var args = ['init', process.env.KAFS_KEYRING, '--keypair'];
+                prompt('Encrypt keyring with password? (y): ', function (resp) {
+                  if (resp.match(/^(y.*|$)/i)) args.push('--password');
+                  var proc = require('child_process').spawn(__filename, args, {stdio: 'inherit'});
                 });
               }
-              else {
-                console.error('Cancelling.');
-                process.exit(1);
-              }
+              else action();
             });
             return;
           }

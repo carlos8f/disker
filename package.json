@@ -10,19 +10,19 @@
   "dependencies": {
     "cli-prompt": "^0.4.0",
     "commander": "carlos8f/commander.js",
+    "debug": "^0.8.0",
     "event-stream": "^3.1.1",
     "glob": "^3.2.9",
     "graceful-fs": "^2.0.3",
     "idgen": "^2.0.2",
+    "json-stable-stringify": "^0.1.2",
     "minimatch": "^0.2.14",
     "mkdirp": "^0.3.5",
     "rimraf": "^2.2.6",
     "saw": "^0.5.2",
-    "ssh-keygen": "^0.2.1",
-    "json-stable-stringify": "^0.1.2",
-    "debug": "^0.8.0",
-    "ursa": "^0.8.0",
-    "ssh-key-to-pem": "^0.11.0"
+    "ssh-key-to-pem": "^0.11.0",
+    "ssh-keygen2": "^0.1.0",
+    "ursa": "^0.8.0"
   },
   "devDependencies": {
     "mocha": "*"
