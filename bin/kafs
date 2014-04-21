@@ -10,7 +10,7 @@ var cmd = require('commander')
 cmd
   .version(require('../package.json').version)
   .description(require('../package.json').description)
-  .option('-k, --keyring <dir>', 'Path to keyring volume (default: ~/.kafs/_keyring or env.KAFS_KEYRING)')
+  .option('-k, --keyring <path>', 'Path to keyring volume (default: ~/.kafs/_keyring or env.KAFS_KEYRING)')
   .option('-v, --volume <path>', 'Volume path (default: ~/.kafs/default or env.KAFS_VOLUME)')
 
 cmd
@@ -19,8 +19,9 @@ cmd
   .option('--keypair', 'Generate a keypair to enable rsa encryption')
   .option('--password', 'Encrypt volume with password (implies --keypair)')
   .action(setup(function (path, opts) {
-    cli.init(path, opts, function (err) {
+    cli.init(path, opts, function (err, vol) {
       if (err) throw err;
+      console.log('+', vol.id, vol.path());
     });
   }))
 
@@ -28,8 +29,9 @@ cmd
   .command('info')
   .description('Get info about the volume')
   .action(setup(function (opts) {
-    cli.info(opts, function (err) {
+    cli.info(opts, function (err, vol) {
       if (err) throw err;
+      console.log(JSON.stringify(vol, null, 2));
     });
   }))
 
