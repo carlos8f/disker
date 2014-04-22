@@ -197,4 +197,14 @@ describe('vol', function () {
         });
     });
   });
+
+  it('unlink', function (done) {
+    volume.unlink('tests/gzip+encrypted/README.md', function (err) {
+      assert.ifError(err);
+      volume.stat('tests/gzip+encrypted/README.md', function (err, stat) {
+        assert.equal(err.code, 'ENOENT');
+        done();
+      });
+    });
+  });
 });
