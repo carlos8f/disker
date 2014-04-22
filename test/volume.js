@@ -182,4 +182,13 @@ describe('vol', function () {
       done();
     });
   });
+
+  it('readdir', function (done) {
+    volume.readdir('tests', function (err, stream) {
+      assert.ifError(err);
+      stream.pipe(require('event-stream').split())
+        .on('data', console.log)
+        .on('end', done);
+    });
+  });
 });
