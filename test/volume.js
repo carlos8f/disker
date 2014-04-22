@@ -186,9 +186,15 @@ describe('vol', function () {
   it('readdir', function (done) {
     volume.readdir('tests', function (err, stream) {
       assert.ifError(err);
-      stream.pipe(require('event-stream').split())
-        .on('data', console.log)
-        .on('end', done);
+      var files = [];
+      stream
+        .on('data', function (data) {
+          files.push(data);
+        })
+        .on('end', function () {
+          assert.deepEqual(files, ['README.md', 'gzip', 'encrypted', 'gzip+encrypted']);
+          done();
+        });
     });
   });
 });
