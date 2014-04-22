@@ -17,7 +17,6 @@ describe('vol', function () {
       assert(vol.pubkey.match(/^ssh-rsa /));
       assert(vol.fingerprint.length);
       assert.strictEqual(vol.depth, 3);
-      assert.strictEqual(vol.clock, 0);
       done();
     });
   });
@@ -40,7 +39,6 @@ describe('vol', function () {
       assert(vol.pubkey);
       assert(vol.fingerprint);
       assert.strictEqual(vol.depth, 3);
-      assert.strictEqual(vol.clock, 0);
 
       done();
     });
