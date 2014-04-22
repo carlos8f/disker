@@ -16,8 +16,7 @@ cmd
 cmd
   .command('init [path]')
   .description('Create a new volume at the given path')
-  .option('--keypair', 'Generate a keypair to enable rsa encryption')
-  .option('--password', 'Encrypt volume with password (implies --keypair)')
+  .option('--passphrase', 'Encrypt private key with a passphrase')
   .action(setup(function (path, opts) {
     cli.init(path, opts, function (err, vol) {
       if (err) throw err;
@@ -36,47 +35,16 @@ cmd
   }))
 
 cmd
-  .command('write <path>')
-  .description('Write a file to the volume')
-  .option('-f, --file <src>', 'Read from file path. if not specified, will read STDIN')
-  .option('-c, --create', 'Will error if path already exists')
-  .action(setup(function (path, opts) {
-    console.log('write!', path);
-  }))
-
-cmd
-  .command('cat <path>')
-  .description('Output the contents of a virtual file')
-  .action(setup(function (path, opts) {
-    console.log('cat!', path);
-  }))
-
-cmd
-  .command('rm <path>')
-  .description('Remove virtual file from volume')
-  .action(setup(function (path, opts) {
-    console.log('rm!', path);
-  }))
-
-cmd
-  .command('touch <path>')
-  .description('Touch the path')
-  .action(setup(function (path, opts) {
-    console.log('touch!', path);
-  }))
-
-cmd
-  .command('stat <path>')
-  .option('-f, --file', 'Check for a virtual file')
-  .option('-d, --dir', 'Check for a virtual directory')
-  .option('-t, --test', 'Return 0 if virtual file/dir exists, 1 otherwise')
-  .action(setup(function (path, opts) {
-    console.log('stat!', path);
+  .command('mount [src] <dest>')
+  .description('Mount the volume')
+  .option('-r, --readonly', 'Mount read-only')
+  .action(setup(function (src, dest, opts) {
+    console.log('mount!', src, dest);
   }))
 
 cmd
   .command('export <dest>')
-  .description('Export the volume contents to new directory')
+  .description('Export the volume contents')
   .option('--exclude <glob>', 'Exclude paths matching glob')
   .option('--include <glob>', 'Include paths matching glob')
   .action(setup(function (dest, opts) {
@@ -90,14 +58,6 @@ cmd
   .option('--include <glob>', 'Include paths matching glob')
   .action(setup(function (src, opts) {
     console.log('import!', src);
-  }))
-
-cmd
-  .command('mount [src] <dest>')
-  .description('Mount the volume')
-  .option('-r, --readonly', 'Mount read-only')
-  .action(setup(function (src, dest, opts) {
-    console.log('mount!', src, dest);
   }))
 
 cmd
@@ -122,13 +82,6 @@ cmd
   .description('Add a key to the keyring. Will read STDIN if no argument specified')
   .action(setup(function (arg, opts) {
     console.log('add-key!');
-  }))
-
-cmd
-  .command('check-key <id>')
-  .description('Returns 0 if the keyring has the key, 1 otherwise')
-  .action(setup(function (id, opts) {
-    console.log('check-key!');
   }))
 
 cmd.parse(process.argv);
