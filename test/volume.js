@@ -4,6 +4,7 @@ var idgen = require('idgen')
 describe('vol', function () {
   var p = '/tmp/kafs-test-' + idgen(), volume;
   after(function (done) {
+    if (process.env.DEBUG) return done();
     rimraf(p, function (err) {
       done(err);
     });
@@ -36,8 +37,8 @@ describe('vol', function () {
       assert(vol.created > 1397612079059);
       assert.strictEqual(vol.id.length, 16);
       assert(vol.id !== volume.id);
-      assert(vol.pubkey);
-      assert(vol.fingerprint);
+      assert(!vol.pubkey);
+      assert(!vol.fingerprint);
       assert.strictEqual(vol.depth, 3);
 
       done();

@@ -16,6 +16,7 @@ cmd
 cmd
   .command('init [path]')
   .description('Create a new volume at the given path')
+  .option('--keypair', 'Generate a keypair for the new volume')
   .option('--passphrase', 'Encrypt private key with a passphrase')
   .action(setup(function (path, opts) {
     cli.init(path, opts, function (err, vol) {
