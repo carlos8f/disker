@@ -207,4 +207,19 @@ describe('vol', function () {
       });
     });
   });
+
+  it('readdir again', function (done) {
+    volume.readdir('tests/gzip+encrypted', function (err, stream) {
+      assert.ifError(err);
+      var files = [];
+      stream
+        .on('data', function (data) {
+          files.push(data);
+        })
+        .on('end', function () {
+          assert.deepEqual(files, []);
+          done();
+        });
+    });
+  });
 });
