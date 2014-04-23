@@ -1,5 +1,6 @@
 var idgen = require('idgen')
   , rimraf = require('rimraf')
+  , path = require('path')
 
 describe('fs', function () {
   var p = '/tmp/kafs-test-' + idgen()
@@ -14,7 +15,7 @@ describe('fs', function () {
   });
 
   it('init data', function (done) {
-    kafs.volume.init(kafs.path.join(p, 'data'), function (err, vol) {
+    kafs.init(path.join(p, 'data'), function (err, vol) {
       assert.ifError(err);
       assert(vol.created > 1397612079059);
       assert.strictEqual(vol.id.length, 16);
@@ -26,7 +27,7 @@ describe('fs', function () {
   });
 
   it('load data', function (done) {
-    kafs.load(kafs.path.join(p, 'data'), function (err, vol) {
+    kafs(path.join(p, 'data'), function (err, vol) {
       assert.ifError(err);
       fs = vol.fs;
       done();

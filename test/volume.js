@@ -1,5 +1,8 @@
 var idgen = require('idgen')
   , rimraf = require('rimraf')
+  , path = require('path')
+  , meta = require('../lib/meta')
+  , crypto = require('../lib/crypto')
 
 describe('vol', function () {
   var p = '/tmp/kafs-test-' + idgen(), volume;
@@ -11,7 +14,7 @@ describe('vol', function () {
   });
 
   it('init keyring', function (done) {
-    kafs.volume.init(kafs.path.join(p, 'keyring'), {keypair: true}, function (err, vol) {
+    kafs.init(path.join(p, 'keyring'), {keypair: true}, function (err, vol) {
       assert.ifError(err);
       assert(vol.created > 1397612079059);
       assert.strictEqual(vol.id.length, 16);
@@ -23,7 +26,7 @@ describe('vol', function () {
   });
 
   it('load keyring', function (done) {
-    kafs.load(kafs.path.join(p, 'keyring'), function (err, vol) {
+    kafs(path.join(p, 'keyring'), function (err, vol) {
       assert.ifError(err);
       assert(vol.created > 1397612079059);
       volume = vol;
@@ -32,7 +35,7 @@ describe('vol', function () {
   });
 
   it('init data', function (done) {
-    kafs.volume.init(kafs.path.join(p, 'data'), {keyring: kafs.path.join(p, 'keyring')}, function (err, vol) {
+    kafs.init(path.join(p, 'data'), {keyring: path.join(p, 'keyring')}, function (err, vol) {
       assert.ifError(err);
       assert(vol.created > 1397612079059);
       assert.strictEqual(vol.id.length, 16);
@@ -40,15 +43,14 @@ describe('vol', function () {
       assert(!vol.pubkey);
       assert(!vol.fingerprint);
       assert.strictEqual(vol.depth, 3);
-
       done();
     });
   });
 
   it('load data', function (done) {
-    kafs.load(kafs.path.join(p, 'data'), {keyring: kafs.path.join(p, 'keyring')}, function (err, vol) {
+    kafs(path.join(p, 'data'), {keyring: path.join(p, 'keyring')}, function (err, vol) {
       assert.ifError(err);
-      assert.strictEqual(kafs.meta.stringify(vol.keyring), kafs.meta.stringify(volume));
+      assert.strictEqual(meta.stringify(vol.keyring), meta.stringify(volume));
       volume = vol;
       done();
     });
@@ -240,7 +242,7 @@ describe('vol', function () {
       assert(stat.digest_final);
       assert(stat.digest != stat.digest_final);
       assert.notEqual(stat.size_encoded, stat.size_raw);
-      kafs.crypto.verify(volume.keyring, stat, function (err) {
+      crypto.verify(volume.keyring, stat, function (err) {
         assert.ifError(err);
         done();
       });
