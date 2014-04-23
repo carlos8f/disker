@@ -55,4 +55,48 @@ describe('fs', function () {
       done();
     });
   });
+
+  it('readFile', function (done) {
+    fs.readFile('does/exist.json', function (err, data) {
+      assert.ifError(err);
+      assert(Buffer.isBuffer(data));
+      assert.equal(data.toString(), testFile);
+      done();
+    });
+  });
+
+  it('readFile with encoding', function (done) {
+    fs.readFile('does/exist.json', {encoding: 'utf8'}, function (err, data) {
+      assert.ifError(err);
+      assert(!Buffer.isBuffer(data));
+      assert.equal(data, testFile);
+      done();
+    });
+  });
+
+  it('createReadStream', function (done) {
+    var stream = fs.createReadStream('does/exist.json');
+    var chunks = [];
+    stream.on('data', function (data) {
+      assert(Buffer.isBuffer(data));
+      chunks.push(data);
+    });
+    stream.on('end', function () {
+      assert.equal(Buffer.concat(chunks).toString(), testFile);
+      done();
+    });
+  });
+
+  it('createReadStream with encoding', function (done) {
+    var stream = fs.createReadStream('does/exist.json', {encoding: 'utf8'});
+    var chunks = [];
+    stream.on('data', function (data) {
+      assert(typeof data === 'string');
+      chunks.push(data);
+    });
+    stream.on('end', function () {
+      assert.equal(chunks.join(''), testFile);
+      done();
+    });
+  });
 });
