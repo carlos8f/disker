@@ -3,8 +3,8 @@ var idgen = require('idgen')
 
 describe('fs', function () {
   var p = '/tmp/kafs-test-' + idgen()
-    , fs
     , testFile = JSON.stringify(require('./fixtures/obj.json'), null, 2)
+    , fs
 
   after(function (done) {
     if (process.env.DEBUG) return done();
@@ -28,7 +28,7 @@ describe('fs', function () {
   it('load data', function (done) {
     kafs.load(kafs.path.join(p, 'data'), function (err, vol) {
       assert.ifError(err);
-      fs = kafs.fs.emulate(vol);
+      fs = vol.fs;
       done();
     });
   });
