@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 
 var cmd = require('commander')
-  , prompt = require('cli-prompt')
-  , kafs = require('../')
-  , spawn = require('child_process').spawn
-  , cli = kafs.cli
+  , cli = require('../lib/cli')
   , setup = cli.setup
 
 cmd
@@ -36,11 +33,19 @@ cmd
   }))
 
 cmd
-  .command('mount [src] <dest>')
+  .command('mount <dest>')
   .description('Mount the volume')
   .option('-r, --readonly', 'Mount read-only')
-  .action(setup(function (src, dest, opts) {
-    console.log('mount!', src, dest);
+  .action(setup(function (dest, opts) {
+    opts.volume.mount(dest, opts, function (err, s) {
+      process.on('SIGINT', s.unmount);
+      process.on('SIGTERM', s.unmount);
+      process.on('uncaughtException', function (err) {
+        s.unmount(function () {
+          throw err;
+        });
+      });
+    });
   }))
 
 cmd
