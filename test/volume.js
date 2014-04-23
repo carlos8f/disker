@@ -242,7 +242,7 @@ describe('vol', function () {
       assert(stat.digest_final);
       assert(stat.digest != stat.digest_final);
       assert.notEqual(stat.size_encoded, stat.size_raw);
-      crypto.verify(volume.keyring, stat, function (err) {
+      volume.keyring.verify(stat, function (err) {
         assert.ifError(err);
         done();
       });
