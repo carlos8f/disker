@@ -99,4 +99,18 @@ describe('fs', function () {
       done();
     });
   });
+
+  it('createWriteStream existing file', function (done) {
+    var stream = fs.createWriteStream('does/exist.json');
+    var changed = testFile.replace(/example glossary/, 'kick-ass thingy');
+    stream.on('finish', function () {
+      fs.readFile('does/exist.json', {encoding: 'utf8'}, function (err, contents) {
+        assert.ifError(err);
+        assert.equal(contents, changed);
+        done();
+      });
+    });
+    stream.write(changed);
+    stream.end();
+  });
 });
