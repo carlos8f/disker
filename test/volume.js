@@ -3,6 +3,8 @@ var idgen = require('idgen')
   , path = require('path')
   , meta = require('../lib/meta')
   , crypto = require('../lib/crypto')
+  , glob = require('glob')
+  , rreaddir = require('rreaddir')
 
 describe('vol', function () {
   var p = '/tmp/kafs-test-' + idgen(), volume;
@@ -258,6 +260,41 @@ describe('vol', function () {
       });
       stream.on('end', function () {
         assert(content.match(/Virtual file system/));
+        done();
+      });
+    });
+  });
+
+  it('add excluded file', function (done) {
+    volume.fs.writeFile('tests/blah', 'blah!', function (err) {
+      assert.ifError(err);
+      volume.fs.readFile('tests/blah', {encoding: 'utf8'}, function (err, data) {
+        assert.ifError(err);
+        assert.equal(data, 'blah!');
+        done();
+      });
+    });
+  });
+
+  it('export', function (done) {
+    var dir = path.join(p, 'export');
+    volume.export(dir, {include: ['**/README.md', 'tests/*'], exclude: 'tests/README.*'}, function (err) {
+      assert.ifError(err);
+      var olddir = process.cwd();
+      process.chdir(dir);
+      rreaddir('./', {mark: true}, function (err, files) {
+        process.chdir(olddir);
+        assert.ifError(err);
+        assert.deepEqual(files.sort(), [
+          'tests/',
+          'tests/README.md',
+          'tests/encrypted/',
+          'tests/encrypted/README.md',
+          'tests/gzip/',
+          'tests/gzip/README.md',
+          'tests/signed/',
+          'tests/signed/README.md'
+        ]);
         done();
       });
     });

@@ -23,10 +23,12 @@
     "ssh-key-to-pem": "^0.11.0",
     "ssh-keygen2": "^0.1.0",
     "ursa": "^0.8.0",
-    "stringstream": "0.0.4"
+    "stringstream": "0.0.4",
+    "rreaddir": "^0.1.0"
   },
   "devDependencies": {
-    "mocha": "*"
+    "mocha": "*",
+    "glob": "^3.2.9"
   },
   "scripts": {
     "test": "make test"
