@@ -149,7 +149,6 @@ describe('vol', function () {
   it('read encrypted', function (done) {
     volume.read('tests/encrypted/README.md', function (err, stream) {
       assert.ifError(err);
-      // @todo: assert using hash
       var content = '';
       stream.on('data', function (data) {
         content += data;
@@ -220,6 +219,45 @@ describe('vol', function () {
           assert.deepEqual(files, []);
           done();
         });
+    });
+  });
+
+  it('write with signature', function (done) {
+    volume.write('tests/signed/README.md', {sign: true, cipher: 'aes-256-cbc'}, function (err, stream) {
+      assert.ifError(err);
+      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+        .pipe(stream)
+        .on('finish', done);
+    });
+  });
+
+  it('stat with signature', function (done) {
+    volume.stat('tests/signed/README.md', function (err, stat) {
+      assert.ifError(err);
+      assert.equal(stat.cipher, 'aes-256-cbc');
+      //assert(stat.gzip);
+      assert(stat.digest);
+      assert(stat.digest_final);
+      assert(stat.digest != stat.digest_final);
+      assert.notEqual(stat.size_encoded, stat.size_raw);
+      kafs.crypto.verify(volume.keyring, stat, function (err) {
+        assert.ifError(err);
+        done();
+      });
+    });
+  });
+
+  it('read with verification', function (done) {
+    volume.read('tests/signed/README.md', {verify: true}, function (err, stream) {
+      assert.ifError(err);
+      var content = '';
+      stream.on('data', function (data) {
+        content += data;
+      });
+      stream.on('end', function () {
+        assert(content.match(/Virtual file system/));
+        done();
+      });
     });
   });
 });
