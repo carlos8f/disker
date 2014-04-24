@@ -2,7 +2,6 @@ var idgen = require('idgen')
   , rimraf = require('rimraf')
   , path = require('path')
   , meta = require('../lib/meta')
-  , crypto = require('../lib/crypto')
   , glob = require('glob')
   , rreaddir = require('rreaddir')
 
@@ -244,7 +243,7 @@ describe('vol', function () {
       assert(stat.digest_final);
       assert(stat.digest != stat.digest_final);
       assert.notEqual(stat.size_encoded, stat.size_raw);
-      volume.keyring.verify(stat, function (err) {
+      volume.keyring.crypto.verify(stat, function (err) {
         assert.ifError(err);
         done();
       });
