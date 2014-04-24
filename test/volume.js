@@ -5,7 +5,7 @@ var idgen = require('idgen')
   , glob = require('glob')
   , rreaddir = require('rreaddir')
 
-describe('vol', function () {
+describe('volume', function () {
   var p = '/tmp/kafs-test-' + idgen(), volume, volume2;
   after(function (done) {
     if (process.env.DEBUG) return done();
@@ -345,6 +345,31 @@ describe('vol', function () {
     volume2.import(dir, {prefix: 'imported'}, function (err) {
       assert.ifError(err);
       volume2.readdir('./', {recursive: true, mark: true}, function (err, files) {
+        assert.ifError(err);
+        assert.deepEqual(files.sort(), [
+          'imported/',
+          'imported/tests/',
+          'imported/tests/README.md',
+          'imported/tests/encrypted/',
+          'imported/tests/encrypted/README.md',
+          'imported/tests/gzip/',
+          'imported/tests/gzip/README.md',
+          'imported/tests/signed/',
+          'imported/tests/signed/README.md'
+        ]);
+        done();
+      });
+    });
+  });
+
+  it('mount', function (done) {
+    var dir = path.join(p, 'mount');
+    volume2.mount(dir, function (err, s) {
+      assert.ifError(err);
+      var olddir = process.cwd();
+      process.chdir(dir);
+      rreaddir('./', {mark: true}, function (err, files) {
+        process.chdir(olddir);
         assert.ifError(err);
         assert.deepEqual(files.sort(), [
           'imported/',
