@@ -5,6 +5,7 @@ var idgen = require('idgen')
   , rreaddir = require('rreaddir')
   , fs = require('graceful-fs')
   , tmpDir = require('os').tmpDir()
+  , mkdirp = require('mkdirp')
 
 describe('volume', function () {
   var p = path.join(tmpDir, 'kafs-test-' + idgen())
@@ -415,5 +416,79 @@ describe('volume', function () {
         });
       }, 2000);
     });
+  });
+
+  it('mount reflects internally modified file', function (done) {
+    var dest = 'imported/tests/gzip/README.md';
+    volume2.fs.writeFile(dest, testFile + '\nThis is internally modified!', function (err) {
+      assert.ifError(err);
+      setTimeout(function () {
+        fs.readFile(path.join(p, 'mount', dest), {encoding: 'utf8'}, function (err, data) {
+          assert.ifError(err);
+          assert.equal(data, testFile + '\nThis is internally modified!');
+          done();
+        });
+      }, 2000);
+    });
+  });
+
+  it('add external file', function (done) {
+    var dest = 'external/subdir/README.md';
+    mkdirp(path.dirname(path.join(p, 'mount', dest)), function (err) {
+      assert.ifError(err);
+      fs.writeFile(path.join(p, 'mount', dest), 'readme', function (err) {
+        assert.ifError(err);
+        done();
+      });
+    });
+  });
+
+  it('mount reflects external added file', function (done) {
+    var dest = 'external/subdir/README.md';
+    setTimeout(function () {
+      volume2.fs.readFile(dest, {encoding: 'utf8'}, function (err, data) {
+        assert.ifError(err);
+        assert.equal(data, 'readme');
+        done();
+      });
+    }, 2000);
+  });
+
+  it('delete external file', function (done) {
+    var dest = 'external/subdir/README.md';
+    fs.unlink(path.join(p, 'mount', dest), function (err) {
+      assert.ifError(err);
+      done();
+    });
+  });
+
+  it('mount reflects externally deleted file', function (done) {
+    var dest = 'external/subdir/README.md';
+    setTimeout(function () {
+      volume2.stat(dest, function (err, stat) {
+        assert(err);
+        assert.equal(err.code, 'ENOENT');
+        done();
+      });
+    }, 2000);
+  });
+
+  it('delete internal file', function (done) {
+    var dest = 'imported/tests/README.md';
+    volume2.unlink(dest, function (err) {
+      assert.ifError(err);
+      done();
+    });
+  });
+
+  it('mount reflects internally deleted file', function (done) {
+    var dest = 'imported/tests/README.md';
+    setTimeout(function () {
+      fs.stat(path.join(p, 'mount', dest), function (err, stat) {
+        assert(err);
+        assert.equal(err.code, 'ENOENT');
+        done();
+      });
+    }, 2000);
   });
 });
