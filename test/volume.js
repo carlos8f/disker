@@ -6,7 +6,7 @@ var idgen = require('idgen')
   , rreaddir = require('rreaddir')
 
 describe('vol', function () {
-  var p = '/tmp/kafs-test-' + idgen(), volume;
+  var p = '/tmp/kafs-test-' + idgen(), volume, volume2;
   after(function (done) {
     if (process.env.DEBUG) return done();
     rimraf(p, function (err) {
@@ -275,6 +275,25 @@ describe('vol', function () {
     });
   });
 
+  it('recursive readdir', function (done) {
+    volume.readdir('./', {recursive: true, mark: true}, function (err, files) {
+      assert.ifError(err);
+      assert.deepEqual(files.sort(), [
+        'tests/',
+        'tests/README.md',
+        'tests/blah',
+        'tests/encrypted/',
+        'tests/encrypted/README.md',
+        'tests/gzip+encrypted/',
+        'tests/gzip/',
+        'tests/gzip/README.md',
+        'tests/signed/',
+        'tests/signed/README.md'
+      ]);
+      done();
+    });
+  });
+
   it('export', function (done) {
     var dir = path.join(p, 'export');
     volume.export(dir, {include: ['**/README.md', 'tests/*'], exclude: 'tests/README.*'}, function (err) {
@@ -293,6 +312,50 @@ describe('vol', function () {
           'tests/gzip/README.md',
           'tests/signed/',
           'tests/signed/README.md'
+        ]);
+        done();
+      });
+    });
+  });
+
+  it('init new', function (done) {
+    kafs.init(path.join(p, 'data2'), {keyring: path.join(p, 'keyring')}, function (err, vol) {
+      assert.ifError(err);
+      assert(vol.created > 1397612079059);
+      assert.strictEqual(vol.id.length, 16);
+      assert(vol.id !== volume.id);
+      assert(!vol.pubkey);
+      assert(!vol.fingerprint);
+      assert.strictEqual(vol.depth, 3);
+      volume2 = vol;
+      done();
+    });
+  });
+
+  it('new is empty', function (done) {
+    volume2.readdir('/', {recursive: true}, function (err, files) {
+      assert.ifError(err);
+      assert.equal(files.length, 0);
+      done();
+    });
+  });
+
+  it('import', function (done) {
+    var dir = path.join(p, 'export');
+    volume2.import(dir, {prefix: 'imported'}, function (err) {
+      assert.ifError(err);
+      volume2.readdir('./', {recursive: true}, function (err, files) {
+        assert.ifError(err);
+        console.log(files);
+        assert.deepEqual(files.sort(), [
+          'imported/tests/',
+          'imported/tests/README.md',
+          'imported/tests/encrypted/',
+          'imported/tests/encrypted/README.md',
+          'imported/tests/gzip/',
+          'imported/tests/gzip/README.md',
+          'imported/tests/signed/',
+          'imported/tests/signed/README.md'
         ]);
         done();
       });
