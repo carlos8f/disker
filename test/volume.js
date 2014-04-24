@@ -344,10 +344,10 @@ describe('vol', function () {
     var dir = path.join(p, 'export');
     volume2.import(dir, {prefix: 'imported'}, function (err) {
       assert.ifError(err);
-      volume2.readdir('./', {recursive: true}, function (err, files) {
+      volume2.readdir('./', {recursive: true, mark: true}, function (err, files) {
         assert.ifError(err);
-        console.log(files);
         assert.deepEqual(files.sort(), [
+          'imported/',
           'imported/tests/',
           'imported/tests/README.md',
           'imported/tests/encrypted/',
