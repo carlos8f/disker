@@ -2,11 +2,22 @@ var idgen = require('idgen')
   , rimraf = require('rimraf')
   , path = require('path')
   , meta = require('../lib/meta')
-  , glob = require('glob')
   , rreaddir = require('rreaddir')
+  , fs = require('graceful-fs')
+  , tmpDir = require('os').tmpDir()
 
 describe('volume', function () {
-  var p = '/tmp/kafs-test-' + idgen(), volume, volume2;
+  var p = path.join(tmpDir, 'kafs-test-' + idgen())
+    , volume, volume2, watcher, testFile
+
+  before(function (done) {
+    fs.readFile(path.resolve(__dirname, '..', 'README.md'), {encoding: 'utf8'}, function (err, data) {
+      assert.ifError(err);
+      testFile = data;
+      done();
+    });
+  });
+
   after(function (done) {
     if (process.env.DEBUG) return done();
     rimraf(p, function (err) {
@@ -60,7 +71,7 @@ describe('volume', function () {
   it('write', function (done) {
     volume.write('tests/README.md', function (err, stream) {
       assert.ifError(err);
-      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+      require('fs').createReadStream(path.resolve(__dirname, '..', 'README.md'))
         .pipe(stream)
         .on('finish', done);
     });
@@ -94,7 +105,7 @@ describe('volume', function () {
   it('write gzipped', function (done) {
     volume.write('tests/gzip/README.md', {gzip: true}, function (err, stream) {
       assert.ifError(err);
-      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+      require('fs').createReadStream(path.resolve(__dirname, '..', 'README.md'))
         .pipe(stream)
         .on('finish', done);
     });
@@ -130,7 +141,7 @@ describe('volume', function () {
   it('write encrypted', function (done) {
     volume.write('tests/encrypted/README.md', {cipher: 'aes-256-cbc'}, function (err, stream) {
       assert.ifError(err);
-      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+      require('fs').createReadStream(path.resolve(__dirname, '..', 'README.md'))
         .pipe(stream)
         .on('finish', done);
     });
@@ -166,7 +177,7 @@ describe('volume', function () {
   it('write gzip/encrypted', function (done) {
     volume.write('tests/gzip+encrypted/README.md', {gzip: true, cipher: 'aes-256-cbc'}, function (err, stream) {
       assert.ifError(err);
-      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+      require('fs').createReadStream(path.resolve(__dirname, '..', 'README.md'))
         .pipe(stream)
         .on('finish', done);
     });
@@ -228,7 +239,7 @@ describe('volume', function () {
   it('write with signature', function (done) {
     volume.write('tests/signed/README.md', {sign: true, cipher: 'aes-256-cbc'}, function (err, stream) {
       assert.ifError(err);
-      require('fs').createReadStream(require('path').resolve(__dirname, '..', 'README.md'))
+      require('fs').createReadStream(path.resolve(__dirname, '..', 'README.md'))
         .pipe(stream)
         .on('finish', done);
     });
@@ -382,8 +393,27 @@ describe('volume', function () {
           'imported/tests/signed/',
           'imported/tests/signed/README.md'
         ]);
+        watcher = s;
         done();
       });
+    });
+  });
+
+  it('wait for watcher to take effect', function (done) {
+    setTimeout(done, 3000);
+  });
+
+  it('mount reflects externally modified file', function (done) {
+    var dest = 'imported/tests/README.md';
+    fs.appendFile(path.join(p, 'mount', dest), '\nThis is the new readme!', function (err) {
+      assert.ifError(err);
+      setTimeout(function () {
+        volume2.fs.readFile(dest, {encoding: 'utf8'}, function (err, data) {
+          assert.ifError(err);
+          assert.equal(data, testFile + '\nThis is the new readme!');
+          done();
+        });
+      }, 2000);
     });
   });
 });
