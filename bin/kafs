@@ -33,18 +33,12 @@ cmd
   }))
 
 cmd
-  .command('mount <dest>')
+  .command('mount [dest]')
   .description('Mount the volume')
   .option('-r, --readonly', 'Mount read-only')
   .action(setup(function (dest, opts) {
-    opts.volume.mount(dest, opts, function (err, s) {
-      process.on('SIGINT', s.unmount);
-      process.on('SIGTERM', s.unmount);
-      process.on('uncaughtException', function (err) {
-        s.unmount(function () {
-          throw err;
-        });
-      });
+    cli.mount(dest || process.cwd(), opts, function (err) {
+      if (err) throw err;
     });
   }))
 
