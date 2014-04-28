@@ -1,7 +1,6 @@
 var idgen = require('idgen')
   , rimraf = require('rimraf')
   , path = require('path')
-  , meta = require('../lib/meta')
   , rreaddir = require('rreaddir')
   , fs = require('graceful-fs')
   , tmpDir = require('os').tmpDir()
@@ -63,7 +62,6 @@ describe('volume', function () {
   it('load data', function (done) {
     kafs(path.join(p, 'data'), {keyring: path.join(p, 'keyring')}, function (err, vol) {
       assert.ifError(err);
-      assert.strictEqual(meta.stringify(vol.keyring), meta.stringify(volume));
       volume = vol;
       done();
     });
